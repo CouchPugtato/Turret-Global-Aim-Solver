@@ -2,17 +2,42 @@ import GUI from 'https://unpkg.com/lil-gui@0.18/dist/lil-gui.esm.js'
 
 export function setupUI(state, robot) {
   if (window.__sim_gui) window.__sim_gui.destroy()
-  const gui = new GUI({ title: 'Robot Settings' })
+  const gui = new GUI({ title: 'Simulation Settings' })
   window.__sim_gui = gui
 
-  const factor = state.units === 'metric' ? 2.54 : 1
-  const unitLabel = state.units === 'metric' ? 'cm' : 'in'
+  let factor = 1
+  let unitLabel = 'in'
+
+  switch (state.units) {
+    case 'metric': // cm
+      factor = 2.54
+      unitLabel = 'cm'
+      break
+    case 'meters': // m
+      factor = 0.0254
+      unitLabel = 'm'
+      break
+    case 'feet': // ft
+      factor = 1 / 12
+      unitLabel = 'ft'
+      break
+    case 'imperial': // inches
+    default:
+      factor = 1
+      unitLabel = 'in'
+      break
+  }
   
   const toDisplay = (val) => val * factor
   const fromDisplay = (val) => val / factor
 
   const unitsFolder = gui.addFolder('Units')
-  unitsFolder.add(state, 'units', ['imperial', 'metric']).name('System').onChange(() => {
+  unitsFolder.add(state, 'units', {
+    'Imperial (in)': 'imperial',
+    'Imperial (ft)': 'feet',
+    'Metric (cm)': 'metric',
+    'Metric (m)': 'meters'
+  }).name('System').onChange(() => {
     setupUI(state, robot)
   })
   unitsFolder.open()
@@ -85,7 +110,7 @@ export function setupUI(state, robot) {
     state.fuel.exitVelocity = fromDisplay(v)
   })
 
-  fuelFolder.add(fuelUI, 'ballDiameter', toDisplay(1), toDisplay(20)).name(`Ball Diameter (${unitLabel})`).onChange(v => {
+  fuelFolder.add(fuelUI, 'ballDiameter', toDisplay(5), toDisplay(7)).name(`Ball Diameter (${unitLabel})`).onChange(v => {
     state.fuel.ballDiameter = fromDisplay(v)
     reloadRobot()
   })
