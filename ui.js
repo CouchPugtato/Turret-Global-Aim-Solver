@@ -11,20 +11,17 @@ export function setupUI(state, robot) {
   const toDisplay = (val) => val * factor
   const fromDisplay = (val) => val / factor
 
-  // --- Units Folder ---
   const unitsFolder = gui.addFolder('Units')
   unitsFolder.add(state, 'units', ['imperial', 'metric']).name('System').onChange(() => {
     setupUI(state, robot)
   })
   unitsFolder.open()
 
-  // --- Robot Folder ---
   const robotFolder = gui.addFolder(`Robot (${unitLabel})`)
   
   const dimsUI = {
     width: toDisplay(state.robot.width),
-    depth: toDisplay(state.robot.depth),
-    ballDiameter: toDisplay(state.robot.ballDiameter)
+    depth: toDisplay(state.robot.depth)
   }
 
   robotFolder.add(dimsUI, 'width', toDisplay(1), toDisplay(50), toDisplay(0.1)).name('Width').onFinishChange((v) => {
@@ -34,11 +31,6 @@ export function setupUI(state, robot) {
 
   robotFolder.add(dimsUI, 'depth', toDisplay(1), toDisplay(50), toDisplay(0.1)).name('Depth').onFinishChange((v) => {
     state.robot.depth = fromDisplay(v)
-    reloadRobot()
-  })
-
-  robotFolder.add(dimsUI, 'ballDiameter', toDisplay(1), toDisplay(20), toDisplay(0.1)).name('Ball Diameter').onChange((v) => {
-    state.robot.ballDiameter = fromDisplay(v)
     reloadRobot()
   })
 
@@ -55,7 +47,6 @@ export function setupUI(state, robot) {
   
   robotFolder.open()
 
-  // --- Turret Folder ---
   const turretFolder = gui.addFolder('Turret')
   
   turretFolder.add(state.turret, 'yaw', -180, 180, 1).name('Yaw (deg)').listen()
@@ -82,8 +73,25 @@ export function setupUI(state, robot) {
   
   turretFolder.open()
 
+  const fuelFolder = gui.addFolder('Fuel')
+  
+  const fuelUI = {
+    exitVelocity: toDisplay(state.fuel.exitVelocity),
+    ballDiameter: toDisplay(state.fuel.ballDiameter)
+  }
 
-  // --- Helper Functions ---
+  fuelFolder.add(fuelUI, 'exitVelocity', toDisplay(100), toDisplay(500)).name(`Exit Velocity (${unitLabel}/s)`).onChange(v => {
+    state.fuel.exitVelocity = fromDisplay(v)
+  })
+
+  fuelFolder.add(fuelUI, 'ballDiameter', toDisplay(1), toDisplay(20)).name(`Ball Diameter (${unitLabel})`).onChange(v => {
+    state.fuel.ballDiameter = fromDisplay(v)
+    reloadRobot()
+  })
+  
+  fuelFolder.open()
+
+
   function reloadRobot() {
     if (robot.mesh) {
       robot.scene.remove(robot.mesh)
@@ -93,13 +101,11 @@ export function setupUI(state, robot) {
 
   function updateBall() {
     if (robot.ballMesh) {
-      const radius = state.robot.ballDiameter / 2
+      const radius = state.fuel.ballDiameter / 2
       robot.ballMesh.geometry.dispose()
       robot.ballMesh.geometry = new robot.THREE.SphereGeometry(radius, 32, 32)
       
       if (robot.chassisHeight) {
-         // This needs to match the logic in robot.js createBall/createTurret
-         // Z-up logic
          let zPos = (robot.chassisHeight / 2) + radius + 1
          if (robot.turretMesh) {
              zPos += 2

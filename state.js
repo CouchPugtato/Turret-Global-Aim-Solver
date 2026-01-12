@@ -1,19 +1,22 @@
 export const state = {
-  units: 'imperial', // 'imperial' (inches) or 'metric' (cm)
+  units: 'imperial',
   robot: {
-    width: 26, // inches
-    depth: 26, // inches
-    ballDiameter: 6, // inches
-    speed: 20, // inches per second
-    rotationSpeed: 2.5, // radians per second
+    width: 26,
+    depth: 26,
+    speed: 20,
+    rotationSpeed: 2.5,
   },
   turret: {
-    yaw: 0, // degrees
+    yaw: 0,
     pitch: 0,
-    offsetX: 0, // inches
-    offsetY: 0, // inches
-    offsetZ: 0, // inches
-    rotationSpeed: 2.0 // radians per second
+    offsetX: 0,
+    offsetY: 0,
+    offsetZ: 0,
+    rotationSpeed: 2.0
+  },
+  fuel: {
+    exitVelocity: 400,
+    ballDiameter: 6
   },
   debug: false
 }
