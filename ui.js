@@ -11,12 +11,14 @@ export function setupUI(state, robot) {
   const toDisplay = (val) => val * factor
   const fromDisplay = (val) => val / factor
 
+  // --- Units Folder ---
   const unitsFolder = gui.addFolder('Units')
   unitsFolder.add(state, 'units', ['imperial', 'metric']).name('System').onChange(() => {
     setupUI(state, robot)
   })
   unitsFolder.open()
 
+  // --- Robot Folder ---
   const robotFolder = gui.addFolder(`Robot (${unitLabel})`)
   
   const dimsUI = {
@@ -37,7 +39,7 @@ export function setupUI(state, robot) {
 
   robotFolder.add(dimsUI, 'ballDiameter', toDisplay(1), toDisplay(20), toDisplay(0.1)).name('Ball Diameter').onChange((v) => {
     state.robot.ballDiameter = fromDisplay(v)
-    updateBall()
+    reloadRobot()
   })
 
   const speedUI = {
@@ -53,6 +55,16 @@ export function setupUI(state, robot) {
   
   robotFolder.open()
 
+  // --- Turret Folder ---
+  const turretFolder = gui.addFolder('Turret')
+  
+  turretFolder.add(state.turret, 'yaw', -180, 180, 1).name('Yaw (deg)').listen()
+  turretFolder.add(state.turret, 'pitch', -45, 90, 1).name('Pitch (deg)').listen()
+  
+  turretFolder.open()
+
+
+  // --- Helper Functions ---
   function reloadRobot() {
     if (robot.mesh) {
       robot.scene.remove(robot.mesh)
@@ -67,7 +79,12 @@ export function setupUI(state, robot) {
       robot.ballMesh.geometry = new robot.THREE.SphereGeometry(radius, 32, 32)
       
       if (robot.chassisHeight) {
-         robot.ballMesh.position.y = (robot.chassisHeight / 2) + radius
+         // This needs to match the logic in robot.js createBall/createTurret
+         let yPos = (robot.chassisHeight / 2) + radius + 1
+         if (robot.turretMesh) {
+             yPos += 2
+         }
+         robot.ballMesh.position.y = yPos
       }
     }
   }

@@ -7,5 +7,10 @@ export const state = {
     speed: 20, // inches per second
     rotationSpeed: 2.5, // radians per second
   },
+  turret: {
+    yaw: 0, // degrees
+    pitch: 0,
+    rotationSpeed: 2.0 // radians per second
+  },
   debug: false
 }
