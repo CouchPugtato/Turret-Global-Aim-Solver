@@ -288,4 +288,89 @@ export class Robot {
           velocity: direction.multiplyScalar(state.fuel.exitVelocity)
       }
   }
+
+  solveAim(targetPos) {
+      if (!state.turret.autoAim || !this.turretPitchMesh) return
+
+      // 1. calculate Yaw
+      // get turret base position in world space to find direction to target
+      const turretPos = new THREE.Vector3()
+      this.turretMesh.getWorldPosition(turretPos)
+      
+      // calculate differences in X and Y to target
+      const dx = targetPos.x - turretPos.x
+      const dy = targetPos.y - turretPos.y
+      
+      // calculate target angle in global space (atan2 handles all quadrants)
+      const targetYaw = Math.atan2(dy, dx)
+      
+      // get robot's current rotation (heading)
+      const robotYaw = this.mesh.rotation.z
+      
+      // calculate local turret angle relative to robot body
+      let localYaw = targetYaw - robotYaw
+      
+      // normalize angle to range [-PI, PI] for shortest rotation
+      while (localYaw > Math.PI) localYaw -= 2 * Math.PI
+      while (localYaw < -Math.PI) localYaw += 2 * Math.PI
+      
+      // apply calculated yaw to turret state (converted to degrees)
+      state.turret.yaw = THREE.MathUtils.radToDeg(localYaw)
+
+      // 2. calculate Pitch
+      // get current muzzle position and velocity vector
+      const muzzleState = this.getMuzzleState()
+      if (!muzzleState) return
+
+      // constants for physics calculation
+      const v0 = state.fuel.exitVelocity // initial velocity magnitude
+      const g = 386.09 // gravity (inches/s^2)
+      
+      // muzzle position
+      const p0 = muzzleState.position
+      
+      // calculate horizontal distance (range) to target
+      const horizDist = new THREE.Vector2(targetPos.x - p0.x, targetPos.y - p0.y).length()
+      
+      // calculate vertical height difference to target
+      const h = targetPos.z - p0.z
+      
+      // set up Quadratic Equation for tan(theta): A*tan^2(theta) + B*tan(theta) + C = 0
+      // derived from projectile motion equation: y = x*tan(theta) - (g*x^2)/(2*v^2*cos^2(theta))
+      // using identity 1/cos^2(theta) = 1 + tan^2(theta)
+      
+      // coefficient A: (g * x^2) / (2 * v^2)
+      const A = (g * horizDist * horizDist) / (2 * v0 * v0)
+      
+      // coefficient B: -x (horizontal distance)
+      const B = -horizDist
+      
+      // coefficient C: y + A (height difference + A)
+      const C = h + A
+      
+      // calculate Discriminant (B^2 - 4AC) to check for valid solutions
+      const discrim = B*B - 4*A*C
+      
+      if (discrim >= 0) {
+          const sqrtD = Math.sqrt(discrim)
+          const u1 = (-B - sqrtD) / (2 * A)
+          const u2 = (-B + sqrtD) / (2 * A)
+          
+          const theta1 = Math.atan(u1)
+          const theta2 = Math.atan(u2)
+          
+          // use high arc (theta2) to ensure downward entry into funnel
+          let theta = theta2 
+          
+          // if high arc is too steep (> 85 deg) or invalid, try low but on real just dont shoot
+          if (theta > THREE.MathUtils.degToRad(89) || theta < THREE.MathUtils.degToRad(-45)) {
+              theta = theta1
+          }
+          
+          // convert standard elevation angle (0=Horizon, 90=Up) to robot pitch (0=up, 90=horizon)
+          state.turret.pitch = 90 - THREE.MathUtils.radToDeg(theta)
+      } else {
+          state.turret.pitch = 45
+      }
+  }
 }

@@ -12,7 +12,8 @@ export const state = {
     offsetX: 0,
     offsetY: 0,
     offsetZ: 0,
-    rotationSpeed: 2.0
+    rotationSpeed: 2.0,
+    autoAim: true
   },
   fuel: {
     exitVelocity: 400,

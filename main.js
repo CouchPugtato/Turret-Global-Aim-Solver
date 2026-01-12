@@ -35,6 +35,7 @@ function animate() {
   
   const dt = clock.getDelta()
   robot.update(dt)
+  robot.solveAim(field.getTargetPosition())
   projectileManager.update(dt)
   
   controls.update()

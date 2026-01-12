@@ -63,4 +63,8 @@ export class Field {
     this.hubMesh = group
     this.scene.add(this.hubMesh)
   }
+
+  getTargetPosition() {
+      return new THREE.Vector3(60, 0, 74)
+  }
 }

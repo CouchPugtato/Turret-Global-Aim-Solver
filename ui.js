@@ -51,6 +51,7 @@ export function setupUI(state, robot) {
   
   turretFolder.add(state.turret, 'yaw', -180, 180, 1).name('Yaw (deg)').listen()
   turretFolder.add(state.turret, 'pitch', -45, 90, 1).name('Pitch (deg)').listen()
+  turretFolder.add(state.turret, 'autoAim').name('Auto Aim')
 
   const turretOffsetUI = {
     x: toDisplay(state.turret.offsetX),
