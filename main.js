@@ -11,7 +11,7 @@ const { scene, camera, renderer, controls } = createScene(app)
 
 const robot = new Robot(scene)
 const field = new Field(scene)
-const projectileManager = new ProjectileManager(scene)
+const projectileManager = new ProjectileManager(scene, field)
 
 setupUI(state, robot)
 
