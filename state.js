@@ -10,6 +10,9 @@ export const state = {
   turret: {
     yaw: 0, // degrees
     pitch: 0,
+    offsetX: 0, // inches
+    offsetY: 0, // inches
+    offsetZ: 0, // inches
     rotationSpeed: 2.0 // radians per second
   },
   debug: false

@@ -60,6 +60,25 @@ export function setupUI(state, robot) {
   
   turretFolder.add(state.turret, 'yaw', -180, 180, 1).name('Yaw (deg)').listen()
   turretFolder.add(state.turret, 'pitch', -45, 90, 1).name('Pitch (deg)').listen()
+
+  const turretOffsetUI = {
+    x: toDisplay(state.turret.offsetX),
+    y: toDisplay(state.turret.offsetY),
+    z: toDisplay(state.turret.offsetZ)
+  }
+
+  turretFolder.add(turretOffsetUI, 'x', toDisplay(-20), toDisplay(20), toDisplay(0.1)).name('Offset X (Fwd)').onChange(v => {
+    state.turret.offsetX = fromDisplay(v)
+    if (robot.updateTurretPosition) robot.updateTurretPosition()
+  })
+  turretFolder.add(turretOffsetUI, 'y', toDisplay(-10), toDisplay(10), toDisplay(0.1)).name('Offset Y (Side)').onChange(v => {
+    state.turret.offsetY = fromDisplay(v)
+    if (robot.updateTurretPosition) robot.updateTurretPosition()
+  })
+  turretFolder.add(turretOffsetUI, 'z', toDisplay(-20), toDisplay(20), toDisplay(0.1)).name('Offset Z (Height)').onChange(v => {
+    state.turret.offsetZ = fromDisplay(v)
+    if (robot.updateTurretPosition) robot.updateTurretPosition()
+  })
   
   turretFolder.open()
 
@@ -80,11 +99,12 @@ export function setupUI(state, robot) {
       
       if (robot.chassisHeight) {
          // This needs to match the logic in robot.js createBall/createTurret
-         let yPos = (robot.chassisHeight / 2) + radius + 1
+         // Z-up logic
+         let zPos = (robot.chassisHeight / 2) + radius + 1
          if (robot.turretMesh) {
-             yPos += 2
+             zPos += 2
          }
-         robot.ballMesh.position.y = yPos
+         robot.ballMesh.position.z = zPos
       }
     }
   }
