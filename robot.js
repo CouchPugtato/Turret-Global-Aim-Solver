@@ -283,9 +283,22 @@ export class Robot {
       
       const direction = new THREE.Vector3(0, 0, 1).transformDirection(this.turretPitchMesh.matrixWorld).normalize()
       
+      const v = direction.multiplyScalar(state.fuel.exitVelocity)
+      
+      if (state.fuel.shootingError > 0) {
+          const errorPercent = state.fuel.shootingError / 100
+          const rx = (Math.random() * 2 - 1) * errorPercent
+          const ry = (Math.random() * 2 - 1) * errorPercent
+          const rz = (Math.random() * 2 - 1) * errorPercent
+          
+          v.x *= (1 + rx)
+          v.y *= (1 + ry)
+          v.z *= (1 + rz)
+      }
+      
       return {
           position: worldPos,
-          velocity: direction.multiplyScalar(state.fuel.exitVelocity)
+          velocity: v
       }
   }
 

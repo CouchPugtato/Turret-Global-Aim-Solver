@@ -115,6 +115,8 @@ export function setupUI(state, robot) {
     reloadRobot()
   })
   
+  fuelFolder.add(state.fuel, 'shootingError', 0, 20).name('Shooting Error (%)')
+
   fuelFolder.open()
 
 

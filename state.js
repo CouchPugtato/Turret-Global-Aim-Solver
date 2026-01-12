@@ -17,7 +17,8 @@ export const state = {
   },
   fuel: {
     exitVelocity: 400,
-    ballDiameter: 6
+    ballDiameter: 6,
+    shootingError: 0
   },
   debug: false
 }
