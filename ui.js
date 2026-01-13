@@ -31,16 +31,21 @@ export function setupUI(state, robot) {
   const toDisplay = (val) => val * factor
   const fromDisplay = (val) => val / factor
 
-  const unitsFolder = gui.addFolder('Units')
+  const unitsFolder = gui.addFolder('System')
   unitsFolder.add(state, 'units', {
     'Imperial (in)': 'imperial',
     'Imperial (ft)': 'feet',
     'Metric (cm)': 'metric',
     'Metric (m)': 'meters'
-  }).name('System').onChange(() => {
+  }).name('Units').onChange(() => {
     setupUI(state, robot)
   })
   unitsFolder.open()
+  const telemetry = {}
+  Object.defineProperty(telemetry, 'distance', {
+    get() { return toDisplay(state.status.distance) }
+  })
+  unitsFolder.add(telemetry, 'distance', toDisplay(0), toDisplay(300)).name(`Distance (${unitLabel})`).listen()
 
   const robotFolder = gui.addFolder(`Robot (${unitLabel})`)
   

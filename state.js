@@ -20,5 +20,9 @@ export const state = {
     ballDiameter: 6,
     shootingError: 0
   },
+  status: {
+    distanceText: '--',
+    distance: 0
+  },
   debug: false
 }
