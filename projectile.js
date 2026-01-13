@@ -29,13 +29,20 @@ export class ProjectileManager {
     this.projectiles.push({
       mesh: mesh,
       velocity: velocity.clone(),
-      active: true
+      active: true,
+      age: 0
     })
   }
 
   update(dt) {
     for (let i = this.projectiles.length - 1; i >= 0; i--) {
       const p = this.projectiles[i]
+      
+      p.age += dt
+      if (p.age >= 10) {
+        this.removeProjectile(i)
+        continue
+      }
       
       const prevPos = p.mesh.position.clone()
 
