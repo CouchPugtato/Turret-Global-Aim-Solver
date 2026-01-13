@@ -51,7 +51,7 @@ export class Field {
     const funnelMesh = new THREE.Mesh(funnelGeometry, funnelMaterial)
     
     funnelMesh.position.y = baseSize + (funnelHeight / 2)
-    
+    funnelMesh.rotation.y = Math.PI / 2
     funnelMesh.castShadow = true
     funnelMesh.receiveShadow = true
     group.add(funnelMesh)
