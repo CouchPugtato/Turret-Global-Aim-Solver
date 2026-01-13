@@ -303,7 +303,7 @@ export class Robot {
   }
 
   solveAim(targetPos) {
-      if (!state.turret.autoAim || !this.turretPitchMesh) return
+      if (state.turret.autoAimMode === 'off' || !this.turretPitchMesh) return
 
       // 1. calculate Yaw
       // get turret base position in world space to find direction to target
@@ -327,27 +327,35 @@ export class Robot {
       while (localYaw > Math.PI) localYaw -= 2 * Math.PI
       while (localYaw < -Math.PI) localYaw += 2 * Math.PI
       
-      // apply calculated yaw to turret state (converted to degrees)
       state.turret.yaw = THREE.MathUtils.radToDeg(localYaw)
 
-      // 2. calculate Pitch
-      // get current muzzle position and velocity vector
       const muzzleState = this.getMuzzleState()
       if (!muzzleState) return
 
-      // constants for physics calculation
-      const v0 = state.fuel.exitVelocity // initial velocity magnitude
-      const g = 386.09 // gravity (inches/s^2)
+      const g = 386.09
       
-      // muzzle position
       const p0 = muzzleState.position
       
-      // calculate horizontal distance (range) to target
       const horizDist = new THREE.Vector2(targetPos.x - p0.x, targetPos.y - p0.y).length()
       
-      // calculate vertical height difference to target
       const h = targetPos.z - p0.z
-      
+
+      if (state.turret.autoAimMode === 'velocity') {
+          const theta = THREE.MathUtils.degToRad(90 - state.turret.pitch)
+          const cosT = Math.cos(theta)
+          const tanT = Math.tan(theta)
+          const denom = (horizDist * tanT) - h
+          if (denom > 0 && Math.abs(cosT) > 1e-3) {
+              const v0 = Math.sqrt((g * horizDist * horizDist) / (2 * cosT * cosT * denom))
+              if (Number.isFinite(v0) && v0 > 0) {
+                  state.fuel.exitVelocity = v0
+              }
+          }
+          return
+      }
+
+      if (state.turret.autoAimMode !== 'pitch') return
+      const v0 = state.fuel.exitVelocity
       // set up Quadratic Equation for tan(theta): A*tan^2(theta) + B*tan(theta) + C = 0
       // derived from projectile motion equation: y = x*tan(theta) - (g*x^2)/(2*v^2*cos^2(theta))
       // using identity 1/cos^2(theta) = 1 + tan^2(theta)

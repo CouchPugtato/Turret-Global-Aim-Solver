@@ -76,7 +76,11 @@ export function setupUI(state, robot) {
   
   turretFolder.add(state.turret, 'yaw', -180, 180, 1).name('Yaw (deg)').listen()
   turretFolder.add(state.turret, 'pitch', -45, 90, 1).name('Pitch (deg)').listen()
-  turretFolder.add(state.turret, 'autoAim').name('Auto Aim')
+  turretFolder.add(state.turret, 'autoAimMode', {
+    'Pitch Control': 'pitch',
+    'Exit Velocity Control': 'velocity',
+    'Off': 'off'
+  }).name('Auto Aim Mode')
 
   const turretOffsetUI = {
     x: toDisplay(state.turret.offsetX),
@@ -102,13 +106,15 @@ export function setupUI(state, robot) {
   const fuelFolder = gui.addFolder('Fuel')
   
   const fuelUI = {
-    exitVelocity: toDisplay(state.fuel.exitVelocity),
     ballDiameter: toDisplay(state.fuel.ballDiameter)
   }
-
-  fuelFolder.add(fuelUI, 'exitVelocity', toDisplay(100), toDisplay(500)).name(`Exit Velocity (${unitLabel}/s)`).onChange(v => {
-    state.fuel.exitVelocity = fromDisplay(v)
+  const fuelProxy = {}
+  Object.defineProperty(fuelProxy, 'exitVelocity', {
+    get() { return toDisplay(state.fuel.exitVelocity) },
+    set(v) { state.fuel.exitVelocity = fromDisplay(v) }
   })
+
+  fuelFolder.add(fuelProxy, 'exitVelocity', toDisplay(100), toDisplay(500)).name(`Exit Velocity (${unitLabel}/s)`).listen()
 
   fuelFolder.add(fuelUI, 'ballDiameter', toDisplay(5), toDisplay(7)).name(`Ball Diameter (${unitLabel})`).onChange(v => {
     state.fuel.ballDiameter = fromDisplay(v)

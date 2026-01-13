@@ -3,7 +3,7 @@ export const state = {
   robot: {
     width: 26,
     depth: 26,
-    speed: 20,
+    speed: 120,
     rotationSpeed: 2.5,
   },
   turret: {
@@ -13,7 +13,7 @@ export const state = {
     offsetY: 0,
     offsetZ: 0,
     rotationSpeed: 2.0,
-    autoAim: true
+    autoAimMode: 'pitch'
   },
   fuel: {
     exitVelocity: 400,
