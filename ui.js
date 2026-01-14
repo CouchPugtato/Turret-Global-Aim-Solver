@@ -71,8 +71,6 @@ export function setupUI(state, robot) {
   robotFolder.add(speedUI, 'speed', toDisplay(1), toDisplay(200)).name(`Max Speed (${unitLabel}/s)`).onChange(v => {
     state.robot.speed = fromDisplay(v)
   })
-
-  robotFolder.add(state.robot, 'rotationSpeed', 0.1, 10).name('Rotation Speed (rad/s)')
   robotFolder.add({ reset: () => robot.resetPosition() }, 'reset').name('Reset Position')
   
   robotFolder.open()
