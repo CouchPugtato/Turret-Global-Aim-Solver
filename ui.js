@@ -95,7 +95,7 @@ export function setupUI(state, robot) {
     state.turret.offsetX = fromDisplay(v)
     if (robot.updateTurretPosition) robot.updateTurretPosition()
   })
-  turretFolder.add(turretOffsetUI, 'y', toDisplay(-10), toDisplay(10), toDisplay(0.1)).name('Offset Y (Side)').onChange(v => {
+  turretFolder.add(turretOffsetUI, 'y', toDisplay(-20), toDisplay(20), toDisplay(0.1)).name('Offset Y (Side)').onChange(v => {
     state.turret.offsetY = fromDisplay(v)
     if (robot.updateTurretPosition) robot.updateTurretPosition()
   })
