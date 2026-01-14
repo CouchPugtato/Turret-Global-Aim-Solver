@@ -18,7 +18,7 @@ export function createScene(root) {
   const dir = new THREE.DirectionalLight(0xffffff, 0.8)
   dir.position.set(60, 40, 100)
   scene.add(dir)
-  const grid = new THREE.GridHelper(240, 240, 0x666666, 0x222222)
+  const grid = new THREE.GridHelper(260, 260, 0x666666, 0x222222)
   grid.rotateX(Math.PI / 2)
   scene.add(grid)
   return { scene, camera, renderer, controls, THREE }

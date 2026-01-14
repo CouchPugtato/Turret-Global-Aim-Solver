@@ -6,6 +6,31 @@ export class Field {
     this.scene = scene
     this.hubMesh = null
     this.createHub()
+    this.createWall()
+  }
+
+  createWall() {
+    const wallHeight = 47
+    const wallThickness = 1
+    const wallWidth = 200 
+
+    const distFromHubFace = 158.6
+    const hubFaceX = 60 - (47 / 2)
+    const wallFaceX = hubFaceX - distFromHubFace
+    const wallCenterX = wallFaceX - (wallThickness / 2)
+
+    const geometry = new THREE.BoxGeometry(wallThickness, wallWidth, wallHeight)
+    const material = new THREE.MeshStandardMaterial({ 
+      color: 0x666666, 
+      roughness: 0.8 
+    })
+    
+    this.wallMesh = new THREE.Mesh(geometry, material)
+    this.wallMesh.position.set(wallCenterX, 0, wallHeight / 2)
+    this.wallMesh.castShadow = true
+    this.wallMesh.receiveShadow = true
+    
+    this.scene.add(this.wallMesh)
   }
 
   createHub() {
