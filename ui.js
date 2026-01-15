@@ -128,6 +128,21 @@ export function setupUI(state, robot) {
 
   fuelFolder.open()
 
+  const advancedFolder = gui.addFolder('Advanced Physics')
+
+  advancedFolder.add(state.advancedPhysics, 'mode', {
+    'None': 'none',
+    'With Drag': 'drag',
+    'Aim With Drag': 'drag_calc'
+  }).name('Physics Mode')
+
+  advancedFolder.add(state.advancedPhysics, 'dragCoefficient', 0, 2, 0.01).name('Drag Coefficient (dimensionless)')
+  advancedFolder.add(state.advancedPhysics, 'airDensity', 0, 5, 0.01).name('Air Density (kg/m³)')
+  advancedFolder.add(state.advancedPhysics, 'referenceArea', 0, toDisplay(100), toDisplay(0.1)).name(`Ref Area (${unitLabel}²)`)
+  advancedFolder.add(state.advancedPhysics, 'mass', 100, 2000, 1).name('Ball Mass (g)')
+
+  advancedFolder.open()
+
 
   function reloadRobot() {
     if (robot.mesh) {

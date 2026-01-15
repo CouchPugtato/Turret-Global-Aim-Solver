@@ -10,14 +10,26 @@ export class ProjectileManager {
     this.raycaster = new THREE.Raycaster()
   }
 
-  spawn(position, velocity, diameter) {
+  spawn(position, velocity, diameter, physicsModeOverride) {
     const radius = diameter / 2
     const geometry = new THREE.SphereGeometry(radius, 16, 16)
-    const material = new THREE.MeshStandardMaterial({ 
-      color: 0xffff00,
-      roughness: 0.2, 
-      metalness: 0.1 
-    })
+    
+    const physMode = physicsModeOverride || (state.advancedPhysics ? (state.advancedPhysics.mode || 'none') : 'none')
+    const useAdvanced = (physMode !== 'none')
+
+    const material = useAdvanced
+      ? new THREE.MeshStandardMaterial({
+          color: 0xff0000,
+          roughness: 0.2,
+          metalness: 0.1,
+          transparent: true,
+          opacity: 0.4
+        })
+      : new THREE.MeshStandardMaterial({
+          color: 0xffff00,
+          roughness: 0.2,
+          metalness: 0.1
+        })
     const mesh = new THREE.Mesh(geometry, material)
     
     mesh.position.copy(position)
@@ -30,7 +42,9 @@ export class ProjectileManager {
       mesh: mesh,
       velocity: velocity.clone(),
       active: true,
-      age: 0
+      age: 0,
+      advanced: useAdvanced,
+      physicsMode: physMode
     })
   }
 
@@ -45,6 +59,29 @@ export class ProjectileManager {
       }
       
       const prevPos = p.mesh.position.clone()
+
+      if ((p.physicsMode === 'drag' || p.physicsMode === 'drag_calc') && state.advancedPhysics) {          
+        const speed = p.velocity.length() // inches/sec
+        if (speed > 0) {
+          const dragConfig = state.advancedPhysics
+          
+          const metersPerInch = 0.0254 // m/inch to convert from equation native units
+      
+          const v_SI = speed * metersPerInch // mps
+          const area_SI = dragConfig.referenceArea * metersPerInch * metersPerInch // area in m^2 (input is in^2)
+                
+          const cd = dragConfig.dragCoefficient
+          const dragForce_SI = 0.5 * dragConfig.airDensity * v_SI * v_SI * cd * area_SI // newtons (kg*m/s^2)
+      
+          const mass_kg = (dragConfig.mass || 1) / 1000
+          const acc_SI = dragForce_SI / mass_kg
+          const acc_imperial = acc_SI / metersPerInch
+          
+          const dragAcc = p.velocity.clone().normalize().multiplyScalar(-acc_imperial)
+          
+          p.velocity.addScaledVector(dragAcc, dt)
+        }
+      }
 
       p.velocity.z -= this.gravity * dt
       

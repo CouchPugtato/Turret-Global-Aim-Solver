@@ -39,11 +39,35 @@ window.addEventListener('keydown', (e) => {
     if (e.code === 'Space') {
         const muzzleState = robot.getMuzzleState()
         if (muzzleState) {
-            projectileManager.spawn(
-                muzzleState.position, 
-                muzzleState.velocity, 
-                state.fuel.ballDiameter
-            )
+            const mode = state.advancedPhysics ? (state.advancedPhysics.mode || 'none') : 'none'
+            if (mode === 'drag') {
+                projectileManager.spawn(
+                    muzzleState.position,
+                    muzzleState.velocity,
+                    state.fuel.ballDiameter,
+                    'none'
+                )
+                projectileManager.spawn(
+                    muzzleState.position,
+                    muzzleState.velocity,
+                    state.fuel.ballDiameter,
+                    'drag'
+                )
+            } else if (mode === 'drag_calc') {
+                projectileManager.spawn(
+                    muzzleState.position,
+                    muzzleState.velocity,
+                    state.fuel.ballDiameter,
+                    'drag'
+                )
+            } else {
+                projectileManager.spawn(
+                    muzzleState.position, 
+                    muzzleState.velocity, 
+                    state.fuel.ballDiameter,
+                    'none'
+                )
+            }
         }
     }
 })

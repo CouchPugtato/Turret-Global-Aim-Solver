@@ -340,7 +340,24 @@ export class Robot {
       
       const h = targetPos.z - p0.z
 
+      const physMode = state.advancedPhysics ? state.advancedPhysics.mode : 'none'
+
+      if (physMode === 'drag_calc' && state.turret.autoAimMode === 'pitch') {
+          const dragPitch = this.solvePitchWithDrag(targetPos, p0)
+          if (Number.isFinite(dragPitch)) {
+              state.turret.pitch = dragPitch
+              return
+          }
+      }
+
       if (state.turret.autoAimMode === 'velocity') {
+          if (physMode === 'drag_calc') {
+              const vDrag = this.solveVelocityWithDrag(targetPos, p0)
+              if (Number.isFinite(vDrag) && vDrag > 0) {
+                  state.fuel.exitVelocity = vDrag
+                  return
+              }
+          }
           const theta = THREE.MathUtils.degToRad(90 - state.turret.pitch)
           const cosT = Math.cos(theta)
           const tanT = Math.tan(theta)
@@ -371,7 +388,7 @@ export class Robot {
       
       // calculate Discriminant (B^2 - 4AC) to check for valid solutions
       const discrim = B*B - 4*A*C
-      
+
       if (discrim >= 0) {
           const sqrtD = Math.sqrt(discrim)
           const u1 = (-B - sqrtD) / (2 * A)
@@ -393,5 +410,134 @@ export class Robot {
       } else {
           state.turret.pitch = 45
       }
+  }
+  
+  solvePitchWithDrag(targetPos, muzzlePos) {
+      if (!state.advancedPhysics) return state.turret.pitch
+      const g = 386.09
+      const dragConfig = state.advancedPhysics
+      const metersPerInch = 0.0254
+      const robotYaw = this.mesh.rotation.z
+      const turretYawLocalRad = THREE.MathUtils.degToRad(state.turret.yaw)
+      const yawGlobalRad = robotYaw + turretYawLocalRad // world space yaw of the barrel axis
+      const headingDirX = Math.cos(yawGlobalRad)
+      const headingDirY = Math.sin(yawGlobalRad)
+      let bestPitchDeg = state.turret.pitch
+      let smallestMissDistance = Infinity
+      const minPitchDeg = -10
+      const maxPitchDeg = 80
+      const pitchSamples = 18
+      for (let i = 0; i <= pitchSamples; i++) {
+          const candidatePitchDeg = minPitchDeg + (maxPitchDeg - minPitchDeg) * (i / pitchSamples)
+          const elevationRad = THREE.MathUtils.degToRad(90 - candidatePitchDeg) // convert robot pitch to true elevation
+          const cosElevation = Math.cos(elevationRad)
+          const sinElevation = Math.sin(elevationRad)
+          const initialDirection = new THREE.Vector3(
+              headingDirX * cosElevation,
+              headingDirY * cosElevation,
+              sinElevation
+          ).normalize() // unit vector along barrel including pitch
+          const velocity = initialDirection.multiplyScalar(state.fuel.exitVelocity) // initial speed in in/s
+          const position = muzzlePos.clone()
+          let time = 0
+          let closestDistance = Infinity
+          const timeStep = 0.02 // integration step in seconds
+          while (time < 5) {
+              const speed = velocity.length()
+              if (speed > 1e-3) {
+                  const speed_SI = speed * metersPerInch // convert to m/s
+                  const area_SI = dragConfig.referenceArea * metersPerInch * metersPerInch // convert in^2 to m^2
+                  const dragCoefficient = dragConfig.dragCoefficient
+
+                  const dragForce_SI = 0.5 * dragConfig.airDensity * speed_SI * speed_SI * dragCoefficient * area_SI // N
+                  const mass_kg = (dragConfig.mass || 1) / 1000 // grams to kg
+                  const accel_SI = dragForce_SI / mass_kg // m/s^2
+                  const accel_inPerSec2 = accel_SI / metersPerInch // back to in/s^2
+                  const dragAcceleration = velocity.clone().normalize().multiplyScalar(-accel_inPerSec2) // opposite velocity
+                  velocity.addScaledVector(dragAcceleration, timeStep)
+              }
+              velocity.z -= g * timeStep // gravity in in/s^2
+              position.addScaledVector(velocity, timeStep) // euler integration
+              const distanceToTarget = position.distanceTo(targetPos)
+              if (distanceToTarget < closestDistance) closestDistance = distanceToTarget
+              if (position.z < 0 && velocity.z < 0) break
+              time += timeStep
+          }
+          if (closestDistance < smallestMissDistance) {
+              smallestMissDistance = closestDistance
+              bestPitchDeg = candidatePitchDeg
+          }
+      }
+      return bestPitchDeg
+  }
+
+  solveVelocityWithDrag(targetPos, muzzlePos) {
+      if (!state.advancedPhysics) return state.fuel.exitVelocity
+      const g = 386.09
+      const dragConfig = state.advancedPhysics
+      const metersPerInch = 0.0254 // convert inches to meters for drag calculations
+      const robotYaw = this.mesh.rotation.z
+      const turretYawLocalRad = THREE.MathUtils.degToRad(state.turret.yaw)
+      const yawGlobalRad = robotYaw + turretYawLocalRad // world space yaw of the barrel axis
+      const headingDirX = Math.cos(yawGlobalRad)
+      const headingDirY = Math.sin(yawGlobalRad)
+      const pitchDeg = state.turret.pitch
+      const elevationRad = THREE.MathUtils.degToRad(90 - pitchDeg) // convert robot pitch to true elevation
+      const cosElevation = Math.cos(elevationRad)
+      const sinElevation = Math.sin(elevationRad)
+      const evalVelocity = (candidateSpeed) => {
+          const initialDirection = new THREE.Vector3(
+              headingDirX * cosElevation,
+              headingDirY * cosElevation,
+              sinElevation
+          ).normalize() // unit vector along barrel including pitch
+          const velocity = initialDirection.multiplyScalar(candidateSpeed) // initial speed in in/s
+          const position = muzzlePos.clone()
+          let time = 0
+          let closestDistance = Infinity
+          const timeStep = 0.01 // integration step in seconds
+          while (time < 6) {
+              const speed = velocity.length()
+              if (speed > 1e-3) {
+                  const speed_SI = speed * metersPerInch // convert to m/s
+                  const area_SI = dragConfig.referenceArea * metersPerInch * metersPerInch // convert in^2 to m^2
+                  const airDensity_SI = dragConfig.airDensity
+                  const dragCoefficient = dragConfig.dragCoefficient
+                  const dragForce_SI = 0.5 * airDensity_SI * speed_SI * speed_SI * dragCoefficient * area_SI // N
+                  const mass_kg = (dragConfig.mass || 1) / 1000 // grams to kg
+                  const accel_SI = dragForce_SI / mass_kg // m/s^2
+                  const accel_inPerSec2 = accel_SI / metersPerInch // back to in/s^2
+                  const dragAcceleration = velocity.clone().normalize().multiplyScalar(-accel_inPerSec2) // opposite velocity
+                  velocity.addScaledVector(dragAcceleration, timeStep)
+              }
+              velocity.z -= g * timeStep // gravity in in/s^2
+              position.addScaledVector(velocity, timeStep) // euler integration
+              const distanceToTarget = position.distanceTo(targetPos)
+              if (distanceToTarget < closestDistance) closestDistance = distanceToTarget
+              if (position.z < 0 && velocity.z < 0) break
+              time += timeStep
+          }
+          return closestDistance
+      }
+      let bestSpeed = state.fuel.exitVelocity
+      let bestError = evalVelocity(bestSpeed)
+      let minSpeed = 50
+      let maxSpeed = 800
+      const passes = 3
+      for (let pass = 0; pass < passes; pass++) {
+          const speedSamples = 16
+          for (let i = 0; i <= speedSamples; i++) {
+              const candidateSpeed = minSpeed + (maxSpeed - minSpeed) * (i / speedSamples)
+              const error = evalVelocity(candidateSpeed)
+              if (error < bestError) {
+                  bestError = error
+                  bestSpeed = candidateSpeed
+              }
+          }
+          const span = (maxSpeed - minSpeed) * 0.25
+          minSpeed = Math.max(20, bestSpeed - span)
+          maxSpeed = bestSpeed + span
+      }
+      return bestSpeed
   }
 }
