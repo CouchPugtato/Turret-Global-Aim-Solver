@@ -1,5 +1,11 @@
 export const state = {
   units: 'imperial',
+  system: {
+    targetMode: 'hub',
+    aimTargetX: 60,
+    aimTargetY: 0,
+    aimTargetZ: 74
+  },
   robot: {
     width: 26,
     depth: 26,

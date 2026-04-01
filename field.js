@@ -5,8 +5,10 @@ export class Field {
   constructor(scene) {
     this.scene = scene
     this.hubMesh = null
+    this.targetMarker = null
     this.createHub()
     this.createWall()
+    this.createTargetMarker()
   }
 
   createWall() {
@@ -87,6 +89,27 @@ export class Field {
 
     this.hubMesh = group
     this.scene.add(this.hubMesh)
+  }
+
+  createTargetMarker() {
+    const geometry = new THREE.SphereGeometry(1.5, 16, 16)
+    const material = new THREE.MeshStandardMaterial({
+      color: 0xff3030,
+      roughness: 0.3,
+      metalness: 0.1
+    })
+
+    this.targetMarker = new THREE.Mesh(geometry, material)
+    this.targetMarker.castShadow = true
+    this.targetMarker.receiveShadow = true
+    this.scene.add(this.targetMarker)
+
+    this.updateTargetMarker(this.getTargetPosition())
+  }
+
+  updateTargetMarker(position) {
+    if (!this.targetMarker) return
+    this.targetMarker.position.copy(position)
   }
 
   getTargetPosition() {

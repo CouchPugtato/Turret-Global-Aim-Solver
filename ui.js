@@ -40,6 +40,28 @@ export function setupUI(state, robot) {
   }).name('Units').onChange(() => {
     setupUI(state, robot)
   })
+  unitsFolder.add(state.system, 'targetMode', {
+    Hub: 'hub',
+    Manual: 'manual'
+  }).name('Target').onChange(() => {
+    setupUI(state, robot)
+  })
+  if (state.system.targetMode === 'manual') {
+    const manualTargetUI = {
+      x: toDisplay(state.system.aimTargetX),
+      y: toDisplay(state.system.aimTargetY),
+      z: toDisplay(state.system.aimTargetZ)
+    }
+    unitsFolder.add(manualTargetUI, 'x', toDisplay(-300), toDisplay(300), toDisplay(0.1)).name(`Aim Target X (${unitLabel})`).onChange((v) => {
+      state.system.aimTargetX = fromDisplay(v)
+    })
+    unitsFolder.add(manualTargetUI, 'y', toDisplay(-300), toDisplay(300), toDisplay(0.1)).name(`Aim Target Y (${unitLabel})`).onChange((v) => {
+      state.system.aimTargetY = fromDisplay(v)
+    })
+    unitsFolder.add(manualTargetUI, 'z', toDisplay(0), toDisplay(300), toDisplay(0.1)).name(`Aim Target Z (${unitLabel})`).onChange((v) => {
+      state.system.aimTargetZ = fromDisplay(v)
+    })
+  }
   unitsFolder.open()
   const telemetry = {}
   Object.defineProperty(telemetry, 'distance', {
